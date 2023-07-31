@@ -135,8 +135,8 @@ td.today {
 
 .schedule_form input[type="text"],
 .schedule_form textarea {
-    width: 100%;
-    padding: 8px 0;
+    width: 96%;
+    padding: 8px 10px;
     line-height: 1.6;
 }
 .schedule_form textarea {

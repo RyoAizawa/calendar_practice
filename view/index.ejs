@@ -27,10 +27,11 @@
                 <label for="trigger" class="popup_trigger"></label>
                 <div class="popup_content">
                     <label for="trigger" class="close_btn">×</label>
-                    <form method="post" class="schedule_form">
+                    <form action="/post" method="post" class="schedule_form">
                         <p>タイトル：<input type="text" name="title"></p>
                         <p>記入者：<input type="text" name="name"></p>
                         <p>スケジュール内容：<textarea name="content"></textarea></p>
+                        <input type="hidden" name="date" id="hiddenDate">
                         <input type="submit" value="送信">
                     </form>
                 </div>
@@ -129,6 +130,7 @@
                                 tableData.classList.add("today")
                             }
                             label.setAttribute("for", "trigger")
+                            label.addEventListener("click", {year: year, month:(month + 1), day:count, handleEvent:setFormattedDate})
                             label.innerHTML = count
                             tableData.append(label)
                         }
@@ -140,11 +142,9 @@
             }
 
             // 日付けをYYYY-MM-DDの書式で返すメソッド
-            const formatDate = (dt) => {
-                let y = dt.getFullYear();
-                let m = ("00" + (dt.getMonth() + 1)).slice(-2);
-                let d = ("00" + dt.getDate()).slice(-2);
-                return y + "-" + m + "-" + d;
+            function setFormattedDate() {
+                document.querySelector("#hiddenDate").value = `${this.year}-${this.month}-${this.day}`
+                console.log(document.querySelector("#hiddenDate"))
             }
 
             // 月遷移ボタンクリックで前月、翌月を表示

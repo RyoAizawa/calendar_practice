@@ -15,7 +15,7 @@ const con = mysql.createConnection({
     host: "localhost",
     user: "root",
     password: "rootroot",
-    database: "ecsite_db",
+    database: "calendar_db",
 });
 
 // 外部静的ファイルの取得
@@ -31,10 +31,19 @@ app.get("/favicon.ico", (req, res) => {
 */
 app.get("/", (req, res) => {
     const sql =
-        "SELECT imageSrc,name,price,itemId,evaluation FROM products JOIN review ON products.id = review.itemId";
+        "SELECT * FROM calendar";
     con.query(sql, function (err, result, fields) {
         if (err) throw err;
-        res.render("index", { products: result });
+        res.render("index", { schedule: result });
+    });
+});
+
+app.post("/post", (req, res) => {
+    const sql =
+        "INSERT INTO calendar SET ?";
+    con.query(sql, req.body, function (err, result, fields) {
+        if (err) throw err;
+        res.redirect("index");
     });
 });
 
