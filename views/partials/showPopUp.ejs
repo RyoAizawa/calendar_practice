@@ -1,0 +1,21 @@
+<div class="popup_wrap">
+    <input type="checkbox" id="show_trigger">
+    <div class="popup_overlay">
+        <label for="show_trigger" class="popup_trigger"></label>
+        <div class="popup_content">
+            <label for="show_trigger" class="close_btn">×</label>
+            <p>日付：<span id="schedule_date"></span></p>
+            <div id="showSchedule">
+                <p>タイトル：<span id="schedule_title"></span></p>
+                <p>記入者：<span id="schedule_name"></span></p>
+                <p>スケジュール内容：<span id="schedule_content"></span></p>
+                <input type="hidden" name="date">
+                <input type="hidden" name="id">
+            </div>
+            <div class="schedule_btnArea">
+                <input type="button" class="circleBtn changeBtn" id="changeBtn" value="変更">
+                <input type="button" class="circleBtn deleteBtn" id="deleteBtn" value="削除">
+            </div>
+        </div>
+    </div>
+</div>

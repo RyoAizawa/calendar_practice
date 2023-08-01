@@ -1,0 +1,21 @@
+<div class="popup_wrap">
+    <input type="checkbox" id="post_trigger">
+    <div class="popup_overlay">
+        <label for="post_trigger" class="popup_trigger"></label>
+        <div class="popup_content">
+            <label for="post_trigger" class="close_btn">×</label>
+            <h2>予定の追加</h2>
+            <p>日付：<span id="post_date"></span></p>
+            <form action="/post" method="post" class="form" id="postForm">
+                <span class="error titleError"></span>
+                <p>タイトル：<input type="text" name="title"></p>
+                <span class="error nameError"></span>
+                <p>記入者：<input type="text" name="name"></p>
+                <span class="error contentError"></span>
+                <p>スケジュール内容：<textarea name="content"></textarea></p>
+                <input type="hidden" name="date">
+                <input type="submit" id="postBtn" class="circleBtn submitBtn" value="送信">
+            </form>
+        </div>
+    </div>
+</div>

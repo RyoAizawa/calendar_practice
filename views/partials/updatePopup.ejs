@@ -1,0 +1,22 @@
+<div class="popup_wrap">
+    <input type="checkbox" id="update_trigger">
+    <div class="popup_overlay">
+        <label for="update_trigger" class="popup_trigger"></label>
+        <div class="popup_content">
+            <label for="update_trigger" class="close_btn">×</label>
+            <h2>予定の変更</h2>
+            <p>日付：<span id="update_date"></span></p>
+            <form action="/" method="post" class="form" id="updateForm">
+                <span class="error titleError"></span>
+                <p>タイトル：<input type="text" name="title"></p>
+                <span class="error nameError"></span>
+                <p>記入者：<input type="text" name="name"></p>
+                <span class="error contentError"></span>
+                <p>スケジュール内容：<textarea name="content"></textarea></p>
+                <input type="hidden" name="date">
+                <input type="hidden" name="id">
+                <input type="submit" class="circleBtn updateBtn" id="updateBtn" value="更新">
+            </form>
+        </div>
+    </div>
+</div>

@@ -7,6 +7,9 @@ html {
     font-size: 62.5%;
 }
 body {
+    font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN",
+    "Hiragino Sans", Meiryo, sans-serif;
+    color: #333;
     font-size: 1.6rem;
 }
 .container {
@@ -33,13 +36,18 @@ body {
 table {
     border: 2px solid #ddd;
     border-collapse: collapse;
+    table-layout: fixed;
     width: 100%;
 }
 th,
 td {
+    height: 80px;
     border: 1px solid #ddd;
-    padding: 20px;
     text-align: center;
+}
+td {
+    vertical-align: top;
+    padding-top: 10px;
 }
 /*日曜日*/
 td:first-child {
@@ -63,8 +71,10 @@ td.today {
 #next-prev-button {
     display: flex;
     justify-content: space-between;
+    align-items: center;
 }
-#next-prev-button button {
+#prev,
+#next {
     cursor: pointer;
     background: #b78d4a;
     color: #fff;
@@ -74,11 +84,28 @@ td.today {
     padding: 10px 40px;
     margin: 20px 0;
 }
-#next-prev-button button:hover {
+#prev:hover,
+#next:hover,
+#todayBtn:hover  {
     opacity: 0.5;
 }
 
-#trigger {
+#todayBtn {
+    cursor: pointer;
+    padding: 10px 20px;
+    background-color: #fff;
+    border:1px solid #ccc;
+}
+
+.dayLabel {
+    display: block;
+    height: 40px;
+    padding: 0 20px 10px;
+}
+
+#post_trigger,
+#show_trigger,
+#update_trigger {
     display: none;
 }
 .popup_overlay {
@@ -93,7 +120,7 @@ td.today {
     height: 100%;
     background: rgba(0, 0, 0, 0.7);
     opacity: 0;
-    transition: opacity 0.5s, transform 0s 0.5s;
+    transition: opacity 0.3s, transform 0s 0.3s;
     transform: scale(0);
 }
 
@@ -133,20 +160,24 @@ td.today {
     transform: translateY(50px);
 }
 
-.schedule_form input[type="text"],
-.schedule_form textarea {
-    width: 96%;
+.form input[type="text"],
+.form textarea {
+    box-sizing: border-box;
+    width: 100%;
     padding: 8px 10px;
-    line-height: 1.6;
+    line-height: 1.4;
+    font-size: 1.6rem;
 }
-.schedule_form textarea {
+.form textarea {
+    font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN",
+    "Hiragino Sans", Meiryo, sans-serif;
     height: calc(1.6em * 5);
 }
-.schedule_form input[type="submit"] {
+.circleBtn {
     display: block;
     margin: 0 auto;
     color: #fff;
-    background-color: #eb6100;
+
     font-size: 1.8rem;
     width: 100px;
     padding: 10px;
@@ -154,7 +185,52 @@ td.today {
     border: none;
 }
 
-.schedule_form input[type="submit"]:hover {
+.circleBtn:hover {
     opacity: 0.5;
     cursor: pointer;
+}
+.submitBtn {
+    background-color: #eb6100;
+}
+.changeBtn {
+    background-color: #0076eb;
+}
+.deleteBtn {
+    background-color: #eb0c00;
+}
+.updateBtn {
+    background-color: #3bb72f;
+}
+.schedule_btnArea {
+    display: flex;
+    justify-content: space-around;
+}
+
+.scheduleTag {
+    display: block;
+    width: 100%;
+    font-size: 1.4rem;
+    box-sizing: border-box;
+    margin-bottom: 5px;
+    padding: 5px 10px 5px 10px;
+    text-align: left;
+    color: #303030;
+    background-color: #4ef29a;
+    z-index: 10;
+}
+
+
+#schedule_title,
+#schedule_name,
+#schedule_content {
+    display: block;
+    font-size: 2.0rem;
+    width: 100%;
+    padding: 10px 20px;
+}
+
+.error {
+    color: red;
+    font-size: 1.4rem;
+    font-weight: bold;
 }

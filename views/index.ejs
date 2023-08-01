@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="ja">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>予定表</title>
+        <meta name="description" content="">
+        <link rel="stylesheet" href="../css/style.css">
+    </head>
+    <body>
+        <div class="container">
+            <!-- xxxx年xx月を表示 -->
+            <h1 id="header"></h1>
+            <!-- ボタンクリックで月移動 -->
+            <div id="next-prev-button">
+                <button id="prev">&lt;</button>
+                <button id="todayBtn">Today</button>
+                <button id="next">&gt;</button>
+            </div>
+            <!-- カレンダー表示領域 -->
+            <div id="calendar"></div>
+        </div>
+        <!-- 予定追加ラベルクリック時のポップアップフォーム -->
+        <%- include("./partials/postPopup.ejs") %>
+        <!-- 予定タグクリック時のポップアップフォーム -->
+        <%- include("./partials/showPopup.ejs") %>
+        <!-- 予定修正ボタンクリック時のポップアップフォーム -->
+        <%- include("./partials/updatePopup.ejs") %>
+
+        <script>
+            const schedule = JSON.parse('<%= JSON.stringify(schedule) %>'.replace(/&#34;/g, '"'))
+            const calendar = document.querySelector('#calendar')
+            const week = ["日", "月", "火", "水", "木", "金", "土"]
+            const today = new Date()
+            // 月末だとずれる可能性があるため、1日固定で取得
+            let showDate = new Date(today.getFullYear(), today.getMonth(), 1)
+
+            // localStorageに現在表示されている年月を保存
+            const updateDate = () => {
+                localStorage.setItem('date', JSON.stringify(showDate))
+            }
+            // 前回表示されていた年月があれば取り出す
+            const getDate = () => {
+                const date = localStorage.getItem('date')
+                if (date) {
+                    showDate = new Date(JSON.parse(date))
+                }
+            }
+            // 初期表示
+            window.onload = () => {
+                getDate()
+                showCalendar(showDate)
+            }
+            // 前の月表示
+            const prevMonth = () => {
+                showDate.setMonth(showDate.getMonth() - 1)
+                showCalendar(showDate)
+                updateDate()
+            }
+            // 次の月表示
+            const nextMonth = () => {
+                showDate.setMonth(showDate.getMonth() + 1)
+                showCalendar(showDate)
+                updateDate()
+            }
+
+            /*
+                カレンダー表示全体のメソッド
+                date ... 指定した年月日
+            */
+            const showCalendar = (date) => {
+                while (calendar.lastChild) {
+                    calendar.removeChild(calendar.lastChild)
+                }
+                let year = date.getFullYear()
+                let month = date.getMonth()
+                // ヘッダにxxxx年xx月を表示
+                document.querySelector('#header').innerHTML = year + "年 " + (month + 1) + "月"
+                // カレンダー作成しブラウザ出力
+                calendar.append(createCalendar(year, month))
+            }
+
+            /*
+                カレンダーを作成するメソッド
+                year ... 指定した年
+                month ... 指定した月
+            */
+            const createCalendar = (year, month) => {
+                const calendar = document.createElement("table")
+                let tableRow = document.createElement("tr")
+                tableRow.classList.add("dayOfWeek")
+                week.forEach((dayOfWeek) => {
+                    const tableHeader = document.createElement("th")
+                    tableHeader.innerHTML = dayOfWeek
+                    tableRow.append(tableHeader)
+                    calendar.append(tableRow)
+                })
+
+                // 1日から月末までの日付けをカウント
+                let day = 0
+                // 1日が始まる曜日(日～土 = 0~6で出力)
+                let startDayOfWeek = new Date(year, month, 1).getDay()
+                // 月末日
+                let endDate = new Date(year, month + 1, 0).getDate()
+                // 先月の月末日
+                let lastMonthEndDate = new Date(year, month, 0).getDate()
+                // (1日が開始する曜日(日～土 = 0～6) + 最終日(30日など)) / 7 = カレンダーを出力する行
+                let row = Math.ceil((startDayOfWeek + endDate) / week.length)
+
+                // 1行ずつ設定
+                for (let i = 0; i < row; i++) {
+                    let dayOfWeek = 0
+                    tableRow = document.createElement("tr")
+                    // 1カラム単位で設定
+                    for (let j = 0; j < week.length; j++) {
+                        dayOfWeek++
+                        const tableData = document.createElement("td")
+                        const label = document.createElement("label")
+                        if (i == 0 && j < startDayOfWeek) {
+                            // 1行目で1日まで先月の日付を設定
+                            // 先月が30日まで、今月が土曜日始まりの場合、 30 - 6 + 0~5 + 1 = 25~30までを1行目に追加
+                            tableData.classList.add("disabled")
+                            tableData.innerHTML = (lastMonthEndDate - startDayOfWeek + j + 1)
+                        } else if (day >= endDate) {
+                            // 最終行で最終日以降、翌月の日付を設定
+                            day++
+                            tableData.classList.add("disabled")
+                            tableData.innerHTML = (day - endDate)
+                        } else {
+                            // 当月の日付を曜日に照らし合わせて設定
+                            day++
+                            const formattedDate = formatDate(year, month + 1, day)
+                            const formattedToday = formatDate(today.getFullYear(), (today.getMonth() + 1), today.getDate())
+                            if (formattedDate === formattedToday) {
+                                tableData.classList.add("today")
+                            }
+                            label.setAttribute("for", "post_trigger")
+                            label.classList.add("dayLabel")
+                            label.addEventListener("click", { year: year, month: (month + 1), day: day, dayOfWeek: dayOfWeek, handleEvent: formValueInit })
+                            label.innerHTML = day
+                            tableData.append(label)
+                            // スケジュールの中から内容が日付けが一致するものを検索
+                            schedule.forEach((elem) => {
+                                // データベースのタイムゾーンはUTCで、データは-9時間で取得されるので特殊なフォーマットが必要
+                                scheduleDate = dateTimeFormat.format(new Date(elem.date))
+                                if (scheduleDate === formattedDate) {
+                                    createScheduleTag(elem, dayOfWeek, tableData)
+                                }
+                            })
+                        }
+                        tableRow.append(tableData)
+                    }
+                    calendar.append(tableRow)
+                }
+                return calendar
+            }
+
+            /*
+                スケジュールが存在する場合のタグを生成するメソッド
+                schedule ... データベースから取得したスケジュール
+                tableData ... 一致した日付けのtdタグ
+            */
+            const createScheduleTag = (schedule, dayOfWeek, tableData) => {
+                const scheduleTag = document.createElement("label")
+                scheduleTag.classList.add("scheduleTag")
+                scheduleTag.setAttribute("for", "show_trigger")
+                if (schedule.title.length > 8) {
+                    scheduleTag.innerHTML = (schedule.title).substring(0, 7) + "..."
+                } else {
+                    scheduleTag.innerHTML = schedule.title
+                }
+                // スケジュールタグをクリック
+                scheduleTag.addEventListener("click", { schedule: schedule, dayOfWeek: dayOfWeek, handleEvent: setScheduleData })
+                tableData.append(scheduleTag)
+            }
+
+            // スケジュールのタグをクリックしたら、クリックしたスケジュールの情報で各項目を上書きするメソッド
+            function setScheduleData() {
+                document.querySelector("#schedule_date").innerHTML               = `${dateTimeFormatJP.format(new Date(this.schedule.date))}(${week[this.dayOfWeek - 1]})`
+                document.querySelector("#schedule_title").innerHTML              = this.schedule.title
+                document.querySelector("#schedule_name").innerHTML               = this.schedule.name
+                document.querySelector("#schedule_content").innerHTML            = convertBr(this.schedule.content)
+                document.querySelector("#showSchedule input[name='date']").value = dateTimeFormat.format(new Date(this.schedule.date))
+                document.querySelector("#showSchedule input[name='id']").value   = this.schedule.id
+            }
+            // 日付けのラベルをクリックした際にフォーム値を初期化するメソッド
+            function formValueInit() {
+                // エラーメッセージの初期化
+                errorMsgInit("post")
+                document.querySelector("#post_date").innerHTML                     = `${formatDate(this.year, this.month, this.day, true)}(${week[this.dayOfWeek - 1]})`
+                document.querySelector("#postForm input[name='title']").value      = ""
+                document.querySelector("#postForm input[name='name']").value       = ""
+                document.querySelector("#postForm textarea[name='content']").value = ""
+                document.querySelector("#postForm input[name='date']").value       = formatDate(this.year, this.month, this.day)
+            }
+            // 日付けをYYYY/MM/DDの書式に変換するメソッド
+            function formatDate(year, month, day, jp = false) {
+                let m = ("00" + (month)).slice(-2)
+                let d = ("00" + day).slice(-2)
+                if (jp) {
+                    return (year + "年" + m + "月" + d + "日")
+                } else {
+                    return (year + "/" + m + "/" + d)
+                }
+            }
+            // データベースから取得したデータをYYYY/MM/DDにフォーマットするメソッド
+            const dateTimeFormat = new Intl.DateTimeFormat('ja-JP', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+            })
+            // データベースから取得したデータをYYYY年MM月DD日にフォーマットするメソッド
+            const dateTimeFormatJP = new Intl.DateTimeFormat('ja-JP', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+            })
+            // 改行を含む文字列の場合、改行コードをbrタグに変換するメソッド
+            const convertBr = (content) => {
+                if (content.match("\n") !== null) {
+                    return content.replace(/\n/g, "<br>")
+                }
+                return content
+            }
+            // テキストエリアは改行コードを\nから\r\nに変換
+            const convertBrTextarea = (content) => {
+                return content.replace(/<br>/g, '\r\n')
+            }
+
+            // フォーム入力チェックするメソッド。今回は未入力のみチェック
+            const FormValidation = (process) => {
+                let error = false
+                // エラーメッセージの初期化
+                errorMsgInit(process)
+                // 各入力項目の取得
+                const title   = document.querySelector(`#${process}Form input[name='title']`)
+                const name    = document.querySelector(`#${process}Form input[name='name']`)
+                const content = document.querySelector(`#${process}Form textarea[name='content']`)
+                // エラー出力位置の取得
+                const titleError   = document.querySelector(`#${process}Form .titleError`)
+                const nameError    = document.querySelector(`#${process}Form .nameError`)
+                const contentError = document.querySelector(`#${process}Form .contentError`)
+                if(title.value === "") {
+                    titleError.innerHTML = "タイトルを入力してください"
+                    error = true
+                }
+                if(name.value === "") {
+                    nameError.innerHTML = "記入者名を入力してください"
+                    error = true
+                }
+                if(content.value === "") {
+                    contentError.innerHTML = "スケジュール内容を入力してください"
+                    error = true
+                }
+                // エラーが1つでもある場合はサーバー送信しない
+                if(error) return false
+                return true
+            }
+
+            // エラーメッセージを初期化するメソッド
+            const errorMsgInit = (process) => {
+                // エラー出力位置の取得
+                const titleError   = document.querySelector(`#${process}Form .titleError`)
+                const nameError    = document.querySelector(`#${process}Form .nameError`)
+                const contentError = document.querySelector(`#${process}Form .contentError`)
+                // エラーの初期化
+                nameError.innerHTML    = ""
+                titleError.innerHTML   = ""
+                contentError.innerHTML = ""
+            }
+
+            // 月遷移ボタンクリックで前月、翌月を表示
+            document.querySelector("#prev").addEventListener("click", prevMonth)
+            document.querySelector("#next").addEventListener("click", nextMonth)
+
+            // Todayボタンクリックで当月のカレンダーを表示
+            document.querySelector("#todayBtn").addEventListener("click", () => {
+                showCalendar(today)
+                // 次回月表示移動は当月からとするためshowDateを初期化
+                showDate = new Date(today.getFullYear(), today.getMonth(), 1)
+                updateDate()
+            })
+
+            // 削除ボタンを押した際の処理
+            document.querySelector("#deleteBtn").addEventListener("click", () => {
+                if (confirm("この予定を削除してよろしいですか？")) {
+                    alert("予定を削除しました。")
+                    const id = document.querySelector("#showSchedule input[name='id']").value
+                    location.assign(`/delete/${id}`)
+                }
+            })
+
+            // 変更ボタンを押した際の処理
+            document.querySelector("#changeBtn").addEventListener("click", () => {
+                // エラーメッセージの初期化
+                errorMsgInit("update")
+                document.querySelector("#update_trigger").checked = true
+                document.querySelector("#update_date").innerHTML                     = document.querySelector("#schedule_date").innerHTML
+                document.querySelector("#updateForm input[name='title']").value      = document.querySelector("#schedule_title").innerHTML
+                document.querySelector("#updateForm input[name='name']").value       = document.querySelector("#schedule_name").innerHTML
+                document.querySelector("#updateForm textarea[name='content']").value = convertBrTextarea(document.querySelector("#schedule_content").innerHTML)
+                document.querySelector("#updateForm input[name='id']").value         = document.querySelector("#showSchedule input[name='id']").value
+                document.querySelector("#updateForm input[name='date']").value       = document.querySelector("#showSchedule input[name='date']").value
+
+                // 更新ボタンを押した際の処理
+                document.querySelector("#updateBtn").addEventListener("click", (e) => {
+                    if(!FormValidation("update")) e.preventDefault()
+                    else {
+                        if (confirm("この内容で予定を変更しますか？")) {
+                            const id = document.querySelector("#updateForm input[name='id']").value
+                            document.querySelector("#updateForm").setAttribute("action", `/update/${id}`)
+                        } else {
+                            e.preventDefault()
+                        }
+                    }
+                })
+            })
+
+            // 送信ボタンを押した際の処理
+            document.querySelector("#postBtn").addEventListener("click", (e) => {
+                if(!FormValidation("post")) e.preventDefault()
+            })
+        </script>
+    </body>
+</html>
